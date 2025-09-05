@@ -23,13 +23,11 @@ export default function SurpresaBruna() {
   ], []);
 
   useEffect(() => {
-    audioRef.current = new Audio("/musica/musica.mp3"); // coloque sua música aqui
+    audioRef.current = new Audio("/musica/musica.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      if (audioRef.current) audioRef.current.pause();
     };
   }, []);
 
@@ -42,21 +40,17 @@ export default function SurpresaBruna() {
       try {
         await audioRef.current.play();
         setIsPlaying(true);
-      } catch (e) {
+      } catch {
         alert("O navegador bloqueou o autoplay. Clique novamente para tocar a música.");
       }
     }
   };
 
-  // Função para gerar pontos em formato de coração ❤️
-  // Fórmula clássica do coração paramétrico, normalizada para 0..100
   const heartPoint = (t) => {
     const x = 16 * Math.sin(t) ** 3;
     const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-    // Normaliza para 0..1
-    const nx = (x + 16) / 32; // x vai de -16..16
-    const ny = (y - (-17)) / (17 - (-17)); // y aprox -17..13 => range 30
-    // Inverte o y para coordenadas de tela
+    const nx = (x + 16) / 32;
+    const ny = (y + 17) / 30;
     return { x: nx * 100, y: (1 - ny) * 100 };
   };
 
@@ -72,7 +66,6 @@ export default function SurpresaBruna() {
             Para Bruna, com todo meu carinho ❤️
           </motion.h1>
 
-          {/* Coração com polaroids */}
           <div className="relative w-[320px] h-[320px] md:w-[520px] md:h-[520px]">
             {photos.map((src, i) => {
               const t = (i / photos.length) * Math.PI * 2;
@@ -84,16 +77,11 @@ export default function SurpresaBruna() {
                 <motion.div
                   key={i}
                   className={`absolute ${size} bg-white shadow-lg rounded-sm border p-1 flex items-center justify-center select-none`}
-                  style={{
-                    top: `calc(${y}% - 40px)`,
-                    left: `calc(${x}% - 40px)`,
-                    transform: `rotate(${rot}deg)`,
-                  }}
+                  style={{ top: `calc(${y}% - 40px)`, left: `calc(${x}% - 40px)`, transform: `rotate(${rot}deg)` }}
                   whileHover={{ scale: 1.08, rotate: 0 }}
                 >
                   <div className="bg-white w-full h-full rounded-sm overflow-hidden flex flex-col">
                     <img src={src} alt="nossa foto" className="w-full h-full object-cover" />
-                    {/* faixa estilo polaroid */}
                     <div className="h-4 md:h-6 bg-white" />
                   </div>
                 </motion.div>
@@ -111,21 +99,26 @@ export default function SurpresaBruna() {
         </>
       ) : (
         <motion.div
-          className="text-center max-w-xl bg-white p-6 rounded-2xl shadow-lg"
+          className="text-center max-w-xl bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <h2 className="text-2xl font-semibold text-pink-700 mb-4">
             Minha mensagem para você 💖
           </h2>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed mb-6">
             Bruna, cada momento com você é uma lembrança que quero guardar para sempre. 💕
             Esse site é só um detalhe, mas ele representa tudo que sinto: carinho, amor e a vontade de estar ao seu lado em cada instante.
           </p>
+          <button
+            onClick={() => setShowMessage(false)}
+            className="px-6 py-2 bg-pink-500 text-white rounded-2xl shadow-md hover:bg-pink-600 transition"
+          >
+            Voltar 💌
+          </button>
         </motion.div>
       )}
 
-      {/* Botão de música flutuante */}
       <button
         onClick={toggleAudio}
         className="fixed bottom-5 right-5 px-4 py-2 rounded-full shadow-lg bg-white/80 backdrop-blur border hover:scale-105 transition"
