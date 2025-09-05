@@ -21,7 +21,6 @@ export default function SurpresaBruna() {
     "/fotos/foto10.jpg",
   ];
 
-  // Posições em formato de coração
   const heartPoint = (t) => {
     const x = 16 * Math.sin(t) ** 3;
     const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
@@ -29,8 +28,7 @@ export default function SurpresaBruna() {
   };
 
   useEffect(() => {
-    // Apenas cria o objeto Audio, não toca
-    audioRef.current = new Audio("/musica.mp3");
+    audioRef.current = new Audio("/musica/musica.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
 
@@ -63,9 +61,7 @@ export default function SurpresaBruna() {
         conf.style.opacity = Math.random();
         conf.style.transition = `all ${Math.random() * 5 + 5}s linear`;
         confettiRef.current.appendChild(conf);
-        setTimeout(() => {
-          conf.style.top = "110%";
-        }, 50);
+        setTimeout(() => { conf.style.top = "110%"; }, 50);
         setTimeout(() => conf.remove(), 6000);
       }, 400);
     };
@@ -75,7 +71,6 @@ export default function SurpresaBruna() {
   const toggleMusic = () => {
     if (!audioRef.current) return;
 
-    // Setup AudioContext e batidas na primeira interação
     if (!audioRef.current.audioCtx) {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtx.createMediaElementSource(audioRef.current);
@@ -115,7 +110,6 @@ export default function SurpresaBruna() {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      // Toca somente quando clicar
       audioRef.current.play().catch(() => alert("Clique novamente para tocar a música!"));
       setIsPlaying(true);
     }
@@ -124,6 +118,7 @@ export default function SurpresaBruna() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden">
 
+      {/* Confetes */}
       <div ref={confettiRef} className="pointer-events-none absolute inset-0 overflow-hidden"></div>
 
       {!showMessage ? (
@@ -132,7 +127,27 @@ export default function SurpresaBruna() {
             Para Bruna, com todo meu carinho ❤️
           </h1>
 
-          <div className="relative w-[320px] h-[320px] md:w-[520px] md:h-[520px]">
+          {/* Post-its */}
+          <div className="absolute top-10 left-10 space-y-4 z-10">
+            <div className="bg-yellow-100 p-3 w-40 shadow-lg rotate-[-3deg] border border-yellow-300">
+              <p className="text-pink-700 text-sm font-semibold">
+                Cada olhar teu é um verso<br/>Que meu coração escreve em segredo. 💖
+              </p>
+            </div>
+            <div className="bg-yellow-100 p-3 w-40 shadow-lg rotate-[2deg] border border-yellow-300">
+              <p className="text-pink-700 text-sm font-semibold">
+                No teu sorriso encontro<br/>O lar que meu peito sempre quis. 💕
+              </p>
+            </div>
+            <div className="bg-yellow-100 p-3 w-40 shadow-lg rotate-[-2deg] border border-yellow-300">
+              <p className="text-pink-700 text-sm font-semibold">
+                Teu abraço é poesia<br/>Que me aquece em silêncio. ❤️
+              </p>
+            </div>
+          </div>
+
+          {/* Fotos em coração */}
+          <div className="relative w-[320px] h-[320px] md:w-[520px] md:h-[520px] z-0">
             {photoFiles.map((src, i) => {
               const t = (i / photoFiles.length) * Math.PI * 2;
               const { x, y } = heartPoint(t);
@@ -153,11 +168,7 @@ export default function SurpresaBruna() {
                   data-rot={rot}
                   ref={(el) => (photoRefs.current[i] = el)}
                 >
-                  <img
-                    src={src}
-                    alt="nossa foto"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={src} alt="nossa foto" className="w-full h-full object-cover"/>
                 </div>
               );
             })}
@@ -165,7 +176,7 @@ export default function SurpresaBruna() {
 
           <button
             onClick={() => setShowMessage(true)}
-            className="mt-10 px-6 py-3 bg-pink-600 text-white rounded-2xl shadow-md hover:bg-pink-700 transition transform hover:scale-105"
+            className="mt-10 px-6 py-3 bg-pink-600 text-white rounded-2xl shadow-md hover:bg-pink-700 transition transform hover:scale-105 z-10"
           >
             💌 Abrir minha surpresa
           </button>
