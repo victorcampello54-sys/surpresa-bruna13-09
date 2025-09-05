@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import "./globals.css";
 
 export default function SurpresaBruna() {
@@ -8,7 +8,6 @@ export default function SurpresaBruna() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
-  // Substitua os links abaixo pelas fotos de vocês (coloque os arquivos em /public/fotos/)
   const photos = useMemo(() => [
     "/fotos/foto1.jpg",
     "/fotos/foto2.jpg",
@@ -31,18 +30,14 @@ export default function SurpresaBruna() {
     };
   }, []);
 
-  const toggleAudio = async () => {
+  const toggleAudio = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      try {
-        await audioRef.current.play();
-        setIsPlaying(true);
-      } catch {
-        alert("O navegador bloqueou o autoplay. Clique novamente para tocar a música.");
-      }
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
     }
   };
 
@@ -55,7 +50,7 @@ export default function SurpresaBruna() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className={`min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden ${showMessage ? 'backdrop-blur-sm' : ''}`}>
       {!showMessage ? (
         <>
           <motion.h1
@@ -78,7 +73,8 @@ export default function SurpresaBruna() {
                   key={i}
                   className={`absolute ${size} bg-white shadow-lg rounded-sm border p-1 flex items-center justify-center select-none`}
                   style={{ top: `calc(${y}% - 40px)`, left: `calc(${x}% - 40px)`, transform: `rotate(${rot}deg)` }}
-                  whileHover={{ scale: 1.08, rotate: 0 }}
+                  animate={isPlaying ? { y: [0, -5, 0], scale: [1, 1.05, 1] } : { y: 0, scale: 1 }}
+                  transition={{ repeat: isPlaying ? Infinity : 0, duration: 2, ease: "easeInOut" }}
                 >
                   <div className="bg-white w-full h-full rounded-sm overflow-hidden flex flex-col">
                     <img src={src} alt="nossa foto" className="w-full h-full object-cover" />
@@ -93,6 +89,7 @@ export default function SurpresaBruna() {
             onClick={() => setShowMessage(true)}
             className="mt-10 px-6 py-3 bg-pink-600 text-white rounded-2xl shadow-md hover:bg-pink-700 transition"
             whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Clique aqui 💌
           </motion.button>
