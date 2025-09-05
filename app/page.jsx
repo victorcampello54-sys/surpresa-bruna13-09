@@ -1,14 +1,14 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import "./globals.css";
+import { useState, useEffect, useRef } from "react";
 
 export default function SurpresaBruna() {
   const [showMessage, setShowMessage] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
+  const photoRefs = useRef([]);
+  const confettiRef = useRef(null);
 
-  const photos = useMemo(() => [
+  const photoFiles = [
     "/fotos/foto1.jpg",
     "/fotos/foto2.jpg",
     "/fotos/foto3.jpg",
@@ -19,18 +19,111 @@ export default function SurpresaBruna() {
     "/fotos/foto8.jpg",
     "/fotos/foto9.jpg",
     "/fotos/foto10.jpg",
-  ], []);
+  ];
+
+  const heartPoint = (t) => {
+    const x = 16 * Math.sin(t) ** 3;
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    return { x: (x + 16) / 32 * 100, y: (1 - (y + 17) / 30) * 100 };
+  };
 
   useEffect(() => {
-    audioRef.current = new Audio("/musica/musica.mp3");
+    audioRef.current = new Audio("/musica.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
+
+    // Web Audio API para detectar batidas
+    let audioCtx, analyser, source, dataArray;
+    let animationFrame;
+
+    const setupAudioAnalysis = () => {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      source = audioCtx.createMediaElementSource(audioRef.current);
+      analyser = audioCtx.createAnalyser();
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      dataArray = new Uint8Array(bufferLength);
+
+      const detectBeat = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        if (avg > 100) { // threshold para batida
+          photoRefs.current.forEach((p) => {
+            if (!p) return;
+            const scale = 1.08 + Math.random() * 0.02;
+            const glow = "0 0 20px rgba(255,182,193,0.8)";
+            p.style.transition = "transform 0.2s, box-shadow 0.2s";
+            p.style.transform = `scale(${scale})`;
+            p.style.boxShadow = glow;
+            setTimeout(() => {
+              p.style.transform = "scale(1)";
+              p.style.boxShadow = "0 0 15px rgba(255,182,193,0.7)";
+            }, 200);
+          });
+        }
+        animationFrame = requestAnimationFrame(detectBeat);
+      };
+      detectBeat();
+    };
+
+    const intervalIds = [];
+
+    // Fade-in inicial + pulso leve
+    photoRefs.current.forEach((p, i) => {
+      if (p) {
+        p.style.opacity = 0;
+        p.style.transform += " scale(0.5)";
+        setTimeout(() => {
+          p.style.transition = "all 1s ease-out";
+          p.style.opacity = 1;
+          p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(1)`;
+          setInterval(() => {
+            if (!p) return;
+            const scale = 1 + Math.random() * 0.02;
+            p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(${scale})`;
+          }, 800 + i * 100);
+        }, i * 100);
+      }
+    });
+
+    // Confete de corações
+    const createConfetti = () => {
+      setInterval(() => {
+        if (!confettiRef.current) return;
+        const conf = document.createElement("div");
+        conf.innerText = "💖";
+        conf.style.position = "absolute";
+        conf.style.fontSize = `${Math.random() * 20 + 10}px`;
+        conf.style.left = `${Math.random() * 100}%`;
+        conf.style.top = `-20px`;
+        conf.style.opacity = Math.random();
+        conf.style.transition = `all ${Math.random() * 5 + 5}s linear`;
+        confettiRef.current.appendChild(conf);
+        setTimeout(() => {
+          conf.style.top = "110%";
+        }, 50);
+        setTimeout(() => conf.remove(), 6000);
+      }, 400);
+    };
+    createConfetti();
+
+    audioRef.current.addEventListener("play", () => {
+      if (!audioCtx) setupAudioAnalysis();
+    });
+    audioRef.current.addEventListener("pause", () => {
+      cancelAnimationFrame(animationFrame);
+    });
+
     return () => {
       if (audioRef.current) audioRef.current.pause();
+      intervalIds.forEach(clearInterval);
+      cancelAnimationFrame(animationFrame);
     };
   }, []);
 
-  const toggleAudio = () => {
+  const toggleMusic = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
@@ -41,70 +134,58 @@ export default function SurpresaBruna() {
     }
   };
 
-  const heartPoint = (t) => {
-    const x = 16 * Math.sin(t) ** 3;
-    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-    const nx = (x + 16) / 32;
-    const ny = (y + 17) / 30;
-    return { x: nx * 100, y: (1 - ny) * 100 };
-  };
-
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden ${showMessage ? 'backdrop-blur-sm' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden transition-all duration-500 ${showMessage ? 'backdrop-blur-sm' : ''}`}>
+      
+      <div ref={confettiRef} className="pointer-events-none absolute inset-0 overflow-hidden"></div>
+
       {!showMessage ? (
         <>
-          <motion.h1
-            className="text-3xl md:text-4xl font-bold text-pink-800 mb-6 text-center drop-shadow"
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <h1 className="text-3xl md:text-4xl font-bold text-pink-800 mb-6 text-center drop-shadow transition-all duration-500">
             Para Bruna, com todo meu carinho ❤️
-          </motion.h1>
+          </h1>
 
-          <div className="relative w-[320px] h-[320px] md:w-[520px] md:h-[520px]">
-            {photos.map((src, i) => {
-              const t = (i / photos.length) * Math.PI * 2;
+          <div className={`relative w-[320px] h-[320px] md:w-[520px] md:h-[520px] transition-all duration-500 ${showMessage ? 'opacity-50' : 'opacity-100'}`}>
+            {photoFiles.map((src, i) => {
+              const t = (i / photoFiles.length) * Math.PI * 2;
               const { x, y } = heartPoint(t);
-              const size = i % 3 === 0 ? "md:w-32 md:h-40 w-24 h-32" : "md:w-28 md:h-36 w-20 h-28";
+              const size = i % 3 === 0 ? 80 : 70;
               const rot = (i % 2 === 0 ? -1 : 1) * (8 + (i * 13) % 12);
 
               return (
-                <motion.div
+                <img
                   key={i}
-                  className={`absolute ${size} bg-white shadow-lg rounded-sm border p-1 flex items-center justify-center select-none`}
-                  style={{ top: `calc(${y}% - 40px)`, left: `calc(${x}% - 40px)`, transform: `rotate(${rot}deg)` }}
-                  animate={isPlaying ? { y: [0, -5, 0], scale: [1, 1.05, 1] } : { y: 0, scale: 1 }}
-                  transition={{ repeat: isPlaying ? Infinity : 0, duration: 2, ease: "easeInOut" }}
-                >
-                  <div className="bg-white w-full h-full rounded-sm overflow-hidden flex flex-col">
-                    <img src={src} alt="nossa foto" className="w-full h-full object-cover" />
-                    <div className="h-4 md:h-6 bg-white" />
-                  </div>
-                </motion.div>
+                  src={src}
+                  alt="nossa foto"
+                  className="absolute rounded-md shadow-lg border transition-all duration-500"
+                  style={{
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    top: `calc(${y}% - ${size / 2}px)`,
+                    left: `calc(${x}% - ${size / 2}px)`,
+                    boxShadow: "0 0 15px rgba(255,182,193,0.7)"
+                  }}
+                  data-rot={rot}
+                  ref={(el) => (photoRefs.current[i] = el)}
+                />
               );
             })}
           </div>
 
-          <motion.button
+          <button
             onClick={() => setShowMessage(true)}
-            className="mt-10 px-6 py-3 bg-pink-600 text-white rounded-2xl shadow-md hover:bg-pink-700 transition"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="mt-10 px-6 py-3 bg-pink-600 text-white rounded-2xl shadow-md hover:bg-pink-700 transition transform hover:scale-105"
           >
-            Clique aqui 💌
-          </motion.button>
+            💌 Abrir minha surpresa
+          </button>
         </>
       ) : (
-        <motion.div
-          className="text-center max-w-xl bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <div className="text-center max-w-xl bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center transition-all duration-500">
           <h2 className="text-2xl font-semibold text-pink-700 mb-4">
             Minha mensagem para você 💖
           </h2>
           <p className="text-gray-700 leading-relaxed mb-6">
-            Bruna, cada momento com você é uma lembrança que quero guardar para sempre. 💕
+            Bruna, cada momento com você é uma lembrança que quero guardar para sempre. 💕<br />
             Esse site é só um detalhe, mas ele representa tudo que sinto: carinho, amor e a vontade de estar ao seu lado em cada instante.
           </p>
           <button
@@ -113,13 +194,12 @@ export default function SurpresaBruna() {
           >
             Voltar 💌
           </button>
-        </motion.div>
+        </div>
       )}
 
       <button
-        onClick={toggleAudio}
+        onClick={toggleMusic}
         className="fixed bottom-5 right-5 px-4 py-2 rounded-full shadow-lg bg-white/80 backdrop-blur border hover:scale-105 transition"
-        title="Tocar/Pausar música"
       >
         {isPlaying ? "⏸ Pausar música" : "▶️ Tocar música"}
       </button>
