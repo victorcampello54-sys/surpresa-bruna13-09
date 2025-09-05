@@ -32,7 +32,6 @@ export default function SurpresaBruna() {
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
 
-    // Web Audio API para detectar batidas
     let audioCtx, analyser, source, dataArray;
     let animationFrame;
 
@@ -49,16 +48,16 @@ export default function SurpresaBruna() {
       const detectBeat = () => {
         analyser.getByteFrequencyData(dataArray);
         const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        if (avg > 100) { // threshold para batida
+        if (avg > 100) {
           photoRefs.current.forEach((p) => {
             if (!p) return;
             const scale = 1.08 + Math.random() * 0.02;
-            const glow = "0 0 20px rgba(255,182,193,0.8)";
+            const glow = "0 0 25px rgba(255,182,193,0.8)";
             p.style.transition = "transform 0.2s, box-shadow 0.2s";
-            p.style.transform = `scale(${scale})`;
+            p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(${scale})`;
             p.style.boxShadow = glow;
             setTimeout(() => {
-              p.style.transform = "scale(1)";
+              p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(1)`;
               p.style.boxShadow = "0 0 15px rgba(255,182,193,0.7)";
             }, 200);
           });
@@ -68,9 +67,7 @@ export default function SurpresaBruna() {
       detectBeat();
     };
 
-    const intervalIds = [];
-
-    // Fade-in inicial + pulso leve
+    // Fade-in e pulso leve contínuo
     photoRefs.current.forEach((p, i) => {
       if (p) {
         p.style.opacity = 0;
@@ -118,7 +115,6 @@ export default function SurpresaBruna() {
 
     return () => {
       if (audioRef.current) audioRef.current.pause();
-      intervalIds.forEach(clearInterval);
       cancelAnimationFrame(animationFrame);
     };
   }, []);
@@ -135,7 +131,7 @@ export default function SurpresaBruna() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden transition-all duration-500 ${showMessage ? 'backdrop-blur-sm' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden transition-all duration-500`}>
       
       <div ref={confettiRef} className="pointer-events-none absolute inset-0 overflow-hidden"></div>
 
@@ -145,7 +141,7 @@ export default function SurpresaBruna() {
             Para Bruna, com todo meu carinho ❤️
           </h1>
 
-          <div className={`relative w-[320px] h-[320px] md:w-[520px] md:h-[520px] transition-all duration-500 ${showMessage ? 'opacity-50' : 'opacity-100'}`}>
+          <div className={`relative w-[320px] h-[320px] md:w-[520px] md:h-[520px]`}>
             {photoFiles.map((src, i) => {
               const t = (i / photoFiles.length) * Math.PI * 2;
               const { x, y } = heartPoint(t);
@@ -157,13 +153,13 @@ export default function SurpresaBruna() {
                   key={i}
                   src={src}
                   alt="nossa foto"
-                  className="absolute rounded-md shadow-lg border transition-all duration-500"
+                  className="absolute rounded-md shadow-lg border border-pink-200 transition-all duration-500"
                   style={{
                     width: `${size}px`,
                     height: `${size}px`,
                     top: `calc(${y}% - ${size / 2}px)`,
                     left: `calc(${x}% - ${size / 2}px)`,
-                    boxShadow: "0 0 15px rgba(255,182,193,0.7)"
+                    boxShadow: "0 0 15px rgba(255,182,193,0.7)",
                   }}
                   data-rot={rot}
                   ref={(el) => (photoRefs.current[i] = el)}
@@ -180,7 +176,7 @@ export default function SurpresaBruna() {
           </button>
         </>
       ) : (
-        <div className="text-center max-w-xl bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center transition-all duration-500">
+        <div className="text-center max-w-xl bg-white/90 p-6 rounded-2xl shadow-lg flex flex-col items-center backdrop-blur-md transition-all duration-500">
           <h2 className="text-2xl font-semibold text-pink-700 mb-4">
             Minha mensagem para você 💖
           </h2>
