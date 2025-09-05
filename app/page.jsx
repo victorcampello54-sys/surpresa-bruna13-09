@@ -21,6 +21,7 @@ export default function SurpresaBruna() {
     "/fotos/foto10.jpg",
   ];
 
+  // Posições em formato de coração
   const heartPoint = (t) => {
     const x = 16 * Math.sin(t) ** 3;
     const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
@@ -28,27 +29,25 @@ export default function SurpresaBruna() {
   };
 
   useEffect(() => {
-    // Inicializa o Audio apenas quando clicar
+    // Apenas cria o objeto Audio, não toca
     audioRef.current = new Audio("/musica.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
 
-    // Fade-in e pulso leve das fotos
+    // Fade-in e leve pulso das fotos
     photoRefs.current.forEach((p, i) => {
-      if (p) {
-        p.style.opacity = 0;
-        p.style.transform += " scale(0.5)";
-        setTimeout(() => {
-          p.style.transition = "all 1s ease-out";
-          p.style.opacity = 1;
-          p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(1)`;
-          setInterval(() => {
-            if (!p) return;
-            const scale = 1 + Math.random() * 0.02;
-            p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(${scale})`;
-          }, 800 + i * 100);
-        }, i * 100);
-      }
+      if (!p) return;
+      p.style.opacity = 0;
+      p.style.transform += " scale(0.5)";
+      setTimeout(() => {
+        p.style.transition = "all 1s ease-out";
+        p.style.opacity = 1;
+        p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(1)`;
+        setInterval(() => {
+          const scale = 1 + Math.random() * 0.02;
+          p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(${scale})`;
+        }, 800 + i * 100);
+      }, i * 100);
     });
 
     // Confete de corações
@@ -76,7 +75,7 @@ export default function SurpresaBruna() {
   const toggleMusic = () => {
     if (!audioRef.current) return;
 
-    // Cria AudioContext na primeira interação
+    // Setup AudioContext e batidas na primeira interação
     if (!audioRef.current.audioCtx) {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtx.createMediaElementSource(audioRef.current);
@@ -84,14 +83,15 @@ export default function SurpresaBruna() {
       source.connect(analyser);
       analyser.connect(audioCtx.destination);
       analyser.fftSize = 256;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
       audioRef.current.audioCtx = audioCtx;
       audioRef.current.analyser = analyser;
-      audioRef.current.dataArray = new Uint8Array(analyser.frequencyBinCount);
+      audioRef.current.dataArray = dataArray;
 
-      // Detecta batida para fotos
       const detectBeat = () => {
-        analyser.getByteFrequencyData(audioRef.current.dataArray);
-        const avg = audioRef.current.dataArray.reduce((a, b) => a + b, 0) / audioRef.current.dataArray.length;
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
         if (avg > 100) {
           photoRefs.current.forEach((p) => {
             if (!p) return;
@@ -115,48 +115,50 @@ export default function SurpresaBruna() {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      // Inicia a música com interação do usuário
-      audioRef.current.play().catch(() => {
-        alert("Clique novamente para tocar a música!");
-      });
+      // Toca somente quando clicar
+      audioRef.current.play().catch(() => alert("Clique novamente para tocar a música!"));
       setIsPlaying(true);
     }
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden transition-all duration-500`}>
-      
+    <div className="min-h-screen bg-gradient-to-b from-pink-100 to-rose-200 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+
       <div ref={confettiRef} className="pointer-events-none absolute inset-0 overflow-hidden"></div>
 
       {!showMessage ? (
         <>
-          <h1 className="text-3xl md:text-4xl font-bold text-pink-800 mb-6 text-center drop-shadow transition-all duration-500">
+          <h1 className="text-3xl md:text-4xl font-bold text-pink-800 mb-6 text-center drop-shadow">
             Para Bruna, com todo meu carinho ❤️
           </h1>
 
-          <div className={`relative w-[320px] h-[320px] md:w-[520px] md:h-[520px]`}>
+          <div className="relative w-[320px] h-[320px] md:w-[520px] md:h-[520px]">
             {photoFiles.map((src, i) => {
               const t = (i / photoFiles.length) * Math.PI * 2;
               const { x, y } = heartPoint(t);
-              const size = i % 3 === 0 ? 80 : 70;
+              const size = i % 3 === 0 ? 100 : 80;
               const rot = (i % 2 === 0 ? -1 : 1) * (8 + (i * 13) % 12);
 
               return (
-                <img
+                <div
                   key={i}
-                  src={src}
-                  alt="nossa foto"
-                  className="absolute rounded-md shadow-lg border border-pink-200 transition-all duration-500"
+                  className="absolute bg-white rounded-lg shadow-lg border border-pink-200 overflow-hidden transition-all duration-500"
                   style={{
                     width: `${size}px`,
                     height: `${size}px`,
                     top: `calc(${y}% - ${size / 2}px)`,
                     left: `calc(${x}% - ${size / 2}px)`,
-                    boxShadow: "0 0 15px rgba(255,182,193,0.7)",
+                    transform: `rotate(${rot}deg)`,
                   }}
                   data-rot={rot}
                   ref={(el) => (photoRefs.current[i] = el)}
-                />
+                >
+                  <img
+                    src={src}
+                    alt="nossa foto"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               );
             })}
           </div>
@@ -169,12 +171,12 @@ export default function SurpresaBruna() {
           </button>
         </>
       ) : (
-        <div className="text-center max-w-xl bg-white/90 p-6 rounded-2xl shadow-lg flex flex-col items-center backdrop-blur-md transition-all duration-500">
+        <div className="text-center max-w-xl bg-white/90 p-6 rounded-2xl shadow-lg flex flex-col items-center backdrop-blur-md">
           <h2 className="text-2xl font-semibold text-pink-700 mb-4">
             Minha mensagem para você 💖
           </h2>
           <p className="text-gray-700 leading-relaxed mb-6">
-            Bruna, cada momento com você é uma lembrança que quero guardar para sempre. 💕<br />
+            Bruna, cada momento com você é uma lembrança que quero guardar para sempre. 💕<br/>
             Esse site é só um detalhe, mas ele representa tudo que sinto: carinho, amor e a vontade de estar ao seu lado em cada instante.
           </p>
           <button
