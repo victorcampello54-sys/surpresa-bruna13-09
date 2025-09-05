@@ -28,46 +28,12 @@ export default function SurpresaBruna() {
   };
 
   useEffect(() => {
+    // Inicializa o Audio apenas quando clicar
     audioRef.current = new Audio("/musica.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
 
-    let audioCtx, analyser, source, dataArray;
-    let animationFrame;
-
-    const setupAudioAnalysis = () => {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      source = audioCtx.createMediaElementSource(audioRef.current);
-      analyser = audioCtx.createAnalyser();
-      source.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      analyser.fftSize = 256;
-      const bufferLength = analyser.frequencyBinCount;
-      dataArray = new Uint8Array(bufferLength);
-
-      const detectBeat = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        if (avg > 100) {
-          photoRefs.current.forEach((p) => {
-            if (!p) return;
-            const scale = 1.08 + Math.random() * 0.02;
-            const glow = "0 0 25px rgba(255,182,193,0.8)";
-            p.style.transition = "transform 0.2s, box-shadow 0.2s";
-            p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(${scale})`;
-            p.style.boxShadow = glow;
-            setTimeout(() => {
-              p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(1)`;
-              p.style.boxShadow = "0 0 15px rgba(255,182,193,0.7)";
-            }, 200);
-          });
-        }
-        animationFrame = requestAnimationFrame(detectBeat);
-      };
-      detectBeat();
-    };
-
-    // Fade-in e pulso leve contínuo
+    // Fade-in e pulso leve das fotos
     photoRefs.current.forEach((p, i) => {
       if (p) {
         p.style.opacity = 0;
@@ -105,27 +71,54 @@ export default function SurpresaBruna() {
       }, 400);
     };
     createConfetti();
-
-    audioRef.current.addEventListener("play", () => {
-      if (!audioCtx) setupAudioAnalysis();
-    });
-    audioRef.current.addEventListener("pause", () => {
-      cancelAnimationFrame(animationFrame);
-    });
-
-    return () => {
-      if (audioRef.current) audioRef.current.pause();
-      cancelAnimationFrame(animationFrame);
-    };
   }, []);
 
   const toggleMusic = () => {
     if (!audioRef.current) return;
+
+    // Cria AudioContext na primeira interação
+    if (!audioRef.current.audioCtx) {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaElementSource(audioRef.current);
+      const analyser = audioCtx.createAnalyser();
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      analyser.fftSize = 256;
+      audioRef.current.audioCtx = audioCtx;
+      audioRef.current.analyser = analyser;
+      audioRef.current.dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      // Detecta batida para fotos
+      const detectBeat = () => {
+        analyser.getByteFrequencyData(audioRef.current.dataArray);
+        const avg = audioRef.current.dataArray.reduce((a, b) => a + b, 0) / audioRef.current.dataArray.length;
+        if (avg > 100) {
+          photoRefs.current.forEach((p) => {
+            if (!p) return;
+            const scale = 1.08 + Math.random() * 0.02;
+            const glow = "0 0 25px rgba(255,182,193,0.8)";
+            p.style.transition = "transform 0.2s, box-shadow 0.2s";
+            p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(${scale})`;
+            p.style.boxShadow = glow;
+            setTimeout(() => {
+              p.style.transform = `translateY(0px) rotate(${p.dataset.rot}deg) scale(1)`;
+              p.style.boxShadow = "0 0 15px rgba(255,182,193,0.7)";
+            }, 200);
+          });
+        }
+        requestAnimationFrame(detectBeat);
+      };
+      detectBeat();
+    }
+
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
+      // Inicia a música com interação do usuário
+      audioRef.current.play().catch(() => {
+        alert("Clique novamente para tocar a música!");
+      });
       setIsPlaying(true);
     }
   };
